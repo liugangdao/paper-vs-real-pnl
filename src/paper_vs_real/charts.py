@@ -49,7 +49,7 @@ def render_waterfall(report: TradeReport, out_path: Path) -> None:
     ax.errorbar(
         3,
         cum_after_funding - slip_mid,
-        yerr=[[slip_mid - slip_lo], [slip_hi - slip_mid]],
+        yerr=[[abs(slip_mid - slip_lo)], [abs(slip_hi - slip_mid)]],
         fmt="none", color=TEXT, capsize=6, linewidth=1.5,
     )
 

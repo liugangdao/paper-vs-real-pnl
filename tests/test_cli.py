@@ -41,6 +41,8 @@ def test_run_produces_json_and_md(mock_client_cls, tmp_path):
 
     assert (out_dir / "report.json").exists()
     assert (out_dir / "report.md").exists()
+    assert (out_dir / "waterfall.png").exists()
+    assert (out_dir / "funding.png").exists()
     obj = json.loads((out_dir / "report.json").read_text())
     assert obj["wallet"] == "0xabc"
     assert obj["asset"] == "BTC"

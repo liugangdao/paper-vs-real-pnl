@@ -67,6 +67,11 @@ def run(
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "report.json").write_text(to_json(report))
     (out_dir / "report.md").write_text(to_markdown(report))
+
+    from paper_vs_real.charts import render_waterfall, render_funding_cumulative
+    render_waterfall(report, out_dir / "waterfall.png")
+    render_funding_cumulative(report, out_dir / "funding.png")
+
     return report
 
 
