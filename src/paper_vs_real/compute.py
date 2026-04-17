@@ -39,8 +39,14 @@ class SlippageResult:
 def _twap_mid(fill_time, candles: list[dict], window_seconds: int = 60) -> Decimal:
     """
     Average of candle closes whose timestamps fall in [fill_time - window, fill_time + window].
-    Default window is 60s each side (≈ one 1-minute candle either side of the fill).
-    Fallback to the single nearest candle if the window catches nothing.
+
+    Default window is 60s per side — a deliberate deviation from the spec's stated ±30s (§4.1).
+    The spec was written assuming 1-second price samples; with 1-minute candles, a ±30s window
+    catches 0-1 candles depending on where the fill falls within the minute, making the result
+    arbitrary. ±60s reliably brackets the fill with at least one candle on each side. The
+    resulting approximation imprecision is absorbed by the ±20% error band mandated in §4.3.
+
+    Falls back to the single nearest candle if the window catches nothing (data gaps).
     """
     lo = fill_time - timedelta(seconds=window_seconds)
     hi = fill_time + timedelta(seconds=window_seconds)
