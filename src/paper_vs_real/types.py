@@ -31,6 +31,7 @@ class Fill:
     side: Literal["buy", "sell"]
     is_maker: bool
     fee_paid: Decimal   # Signed: negative if maker rebate received
+    closed_pnl: Decimal = Decimal("0")  # Hyperliquid's reported realized PnL for this fill (0 for opens)
 
     @property
     def signed_size(self) -> Decimal:
@@ -87,3 +88,4 @@ class TradeReport:
     real_pnl_mid: Decimal
     real_pnl_low: Decimal
     real_pnl_high: Decimal
+    realized_pnl_from_chain: Decimal = Decimal("0")  # Sum of Hyperliquid's own closedPnl across all fills

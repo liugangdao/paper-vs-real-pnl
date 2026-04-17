@@ -50,6 +50,7 @@ def run(
     fees = compute_fees(all_fills)
     funding_cost = compute_funding_cost(funding)
     slip = compute_slippage(all_fills, candles)
+    realized_pnl = sum((f.closed_pnl for f in all_fills), start=Decimal("0"))
 
     costs = CostBreakdown(
         fees=fees,
@@ -69,6 +70,7 @@ def run(
         real_pnl_mid=paper - costs.total_mid,
         real_pnl_low=paper - costs.total_high,
         real_pnl_high=paper - costs.total_low,
+        realized_pnl_from_chain=realized_pnl,
     )
 
     out_dir.mkdir(parents=True, exist_ok=True)

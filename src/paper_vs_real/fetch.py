@@ -33,7 +33,20 @@ class HyperliquidClient:
         if capture_dir:
             path = Path(capture_dir)
             path.mkdir(parents=True, exist_ok=True)
-            (path / f"{body['type']}.json").write_text(json.dumps(data, indent=2))
+            # Accumulate calls of the same type. Each call becomes one entry in a list-of-lists.
+            cap_file = path / f"{body['type']}.json"
+            if cap_file.exists():
+                try:
+                    existing = json.loads(cap_file.read_text())
+                    if not isinstance(existing, list) or (existing and not isinstance(existing[0], list)):
+                        # Previous single-object shape — wrap it
+                        existing = [existing]
+                except Exception:
+                    existing = []
+            else:
+                existing = []
+            existing.append(data)
+            cap_file.write_text(json.dumps(existing, indent=2))
 
         return data
 
@@ -47,6 +60,7 @@ def _fill_from_raw(raw: dict[str, Any]) -> Fill:
         side=side,
         is_maker=not raw["crossed"],
         fee_paid=Decimal(raw["fee"]),
+        closed_pnl=Decimal(raw.get("closedPnl", "0")),
     )
 
 

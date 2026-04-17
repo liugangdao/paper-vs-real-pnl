@@ -23,6 +23,7 @@ def to_json(report: TradeReport) -> str:
         "n_exit_fills": len(report.exit_fills),
         "n_funding_events": len(report.funding_events),
         "paper_pnl": str(report.paper_pnl),
+        "realized_pnl_from_chain": str(report.realized_pnl_from_chain),
         "costs": {
             "fees": str(report.costs.fees),
             "funding": str(report.costs.funding),
@@ -52,6 +53,7 @@ def to_markdown(report: TradeReport) -> str:
         "| Component | Amount |",
         "|-----------|--------|",
         f"| Paper PnL | {_fmt_usd(report.paper_pnl)} |",
+        f"| Realized PnL (chain records) | {_fmt_usd(report.realized_pnl_from_chain)} |",
         f"| Fees (signed) | {_fmt_usd(c.fees)} |",
         f"| Funding cost | {_fmt_usd(c.funding)} |",
         f"| Slippage (mid) | {_fmt_usd(c.slippage_mid)} |",
