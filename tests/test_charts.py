@@ -1,3 +1,4 @@
+import dataclasses
 from pathlib import Path
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
@@ -52,6 +53,50 @@ def test_render_funding_cumulative_writes_png(tmp_path):
     render_funding_cumulative(_sample_report(), out)
     assert out.exists()
     assert out.stat().st_size > 1000
+
+
+def test_render_waterfall_shows_realized_when_meaningfully_different(tmp_path):
+    report = _sample_report()
+    report3 = TradeReport(
+        window=report.window,
+        entry_fills=(),
+        exit_fills=(),
+        funding_events=report.funding_events,
+        costs=report.costs,
+        paper_pnl=Decimal("30000000"),
+        real_pnl_mid=Decimal("28600000"),
+        real_pnl_low=Decimal("28000000"),
+        real_pnl_high=Decimal("29000000"),
+        realized_pnl_from_chain=Decimal("20000000"),
+    )
+    out = tmp_path / "wf.png"
+    render_waterfall(report3, out)
+    assert out.exists() and out.stat().st_size > 1000
+
+
+def test_render_waterfall_skips_slippage_when_zero(tmp_path):
+    report = _sample_report()
+    costs_no_slip = CostBreakdown(
+        fees=report.costs.fees,
+        funding=report.costs.funding,
+        slippage_mid=Decimal("0"),
+        slippage_low=Decimal("0"),
+        slippage_high=Decimal("0"),
+    )
+    report2 = TradeReport(
+        window=report.window,
+        entry_fills=(),
+        exit_fills=(),
+        funding_events=report.funding_events,
+        costs=costs_no_slip,
+        paper_pnl=report.paper_pnl,
+        real_pnl_mid=report.paper_pnl - costs_no_slip.total_mid,
+        real_pnl_low=report.paper_pnl - costs_no_slip.total_high,
+        real_pnl_high=report.paper_pnl - costs_no_slip.total_low,
+    )
+    out = tmp_path / "wf_no_slip.png"
+    render_waterfall(report2, out)
+    assert out.exists() and out.stat().st_size > 1000
 
 
 def test_render_funding_cumulative_with_no_events(tmp_path):
