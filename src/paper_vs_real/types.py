@@ -1,3 +1,22 @@
+"""
+Domain types for the paper-vs-real-pnl tool.
+
+Sign conventions follow a two-stage pipeline:
+
+1. Raw exchange conventions (FundingEvent.amount, Fill.fee_paid): positive =
+   trader received, negative = trader paid. These match what the Hyperliquid
+   Info API returns and are preserved verbatim.
+
+2. Cost conventions (CostBreakdown.fees, CostBreakdown.funding,
+   CostBreakdown.slippage_*): positive = the component *eats* paper PnL. The
+   conversion from raw to cost is the job of the compute layer — funding
+   amounts flip sign (compute_funding_cost), fees are already signed correctly
+   at source, slippage is computed as a cost directly.
+
+The invariant `paper_pnl − CostBreakdown.total_* = real_pnl_*` holds only when
+all three cost components share the cost convention.
+"""
+
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
