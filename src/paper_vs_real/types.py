@@ -58,7 +58,7 @@ class TradeWindow:
 @dataclass(frozen=True)
 class CostBreakdown:
     fees: Decimal
-    funding: Decimal          # Signed; positive means trader paid out net, negative means received
+    funding: Decimal          # Cost convention (see module docstring): positive = net paid; sign-flipped from FundingEvent.amount by compute_funding_cost.
     slippage_mid: Decimal
     slippage_low: Decimal
     slippage_high: Decimal
