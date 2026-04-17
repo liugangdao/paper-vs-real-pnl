@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from datetime import timedelta
 from decimal import Decimal
 
 from paper_vs_real.types import Fill, FundingEvent
@@ -25,3 +27,50 @@ def compute_funding_cost(events: list[FundingEvent]) -> Decimal:
         return Decimal("0")
     raw_sum = sum((e.amount for e in events), start=Decimal("0"))
     return -raw_sum
+
+
+@dataclass(frozen=True)
+class SlippageResult:
+    mid: Decimal
+    low: Decimal
+    high: Decimal
+
+
+def _twap_mid(fill_time, candles: list[dict], window_seconds: int = 60) -> Decimal:
+    """
+    Average of candle closes whose timestamps fall in [fill_time - window, fill_time + window].
+    Default window is 60s each side (≈ one 1-minute candle either side of the fill).
+    Fallback to the single nearest candle if the window catches nothing.
+    """
+    lo = fill_time - timedelta(seconds=window_seconds)
+    hi = fill_time + timedelta(seconds=window_seconds)
+    in_window = [c for c in candles if lo <= c["time"] <= hi]
+    if not in_window:
+        nearest = min(candles, key=lambda c: abs((c["time"] - fill_time).total_seconds()))
+        return nearest["close"]
+    return sum((c["close"] for c in in_window), start=Decimal("0")) / Decimal(len(in_window))
+
+
+def compute_slippage(
+    fills: list[Fill],
+    candles: list[dict],
+    error_band: Decimal = Decimal("0.2"),
+) -> SlippageResult:
+    """
+    Slippage cost = (fill_price − mid) × signed_size, summed across fills.
+    Positive result = slippage ate paper PnL.
+
+    TWAP mid is an approximation; we expose a ±20% band around the computed figure
+    (spec §4.3) so the article can report a range rather than a false-precision number.
+    """
+    if not fills:
+        return SlippageResult(mid=Decimal("0"), low=Decimal("0"), high=Decimal("0"))
+
+    total = Decimal("0")
+    for f in fills:
+        mid = _twap_mid(f.timestamp, candles)
+        total += (f.price - mid) * f.signed_size
+
+    low = total * (Decimal("1") - error_band)
+    high = total * (Decimal("1") + error_band)
+    return SlippageResult(mid=total, low=low, high=high)
