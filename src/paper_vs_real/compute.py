@@ -68,6 +68,18 @@ def compute_slippage(
 
     TWAP mid is an approximation; we expose a ±20% band around the computed figure
     (spec §4.3) so the article can report a range rather than a false-precision number.
+
+    WARNING — KNOWN METHODOLOGY LIMITATION:
+
+    For HFT-style whales with sub-second execution, 1-minute candle closes are
+    far too coarse as a mid-price proxy. The resulting slippage figure can be
+    off by >100% or even flip sign (reporting a "favorable" slippage that is
+    an artifact of candle mismatch, not real execution edge). Episode 1 of the
+    series explicitly excludes slippage from its headline numbers for this
+    reason; the article states this limitation in its methodology section.
+
+    Future work: supplement with orderbook L2 snapshots or 1-second trade
+    prints to get meaningful sub-minute mid-price approximation.
     """
     if not fills:
         return SlippageResult(mid=Decimal("0"), low=Decimal("0"), high=Decimal("0"))

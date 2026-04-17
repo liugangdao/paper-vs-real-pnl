@@ -4,23 +4,27 @@
     "px": "65000.0",
     "sz": "100.0",
     "side": "B",
+    "dir": "Open Long",
     "time": 1740787200000,
     "fee": "1.30",
     "liquidation": false,
     "oid": 1,
     "crossed": true,
-    "startPosition": "0.0"
+    "startPosition": "0.0",
+    "tid": 1
   },
   {
     "coin": "BTC",
     "px": "68000.0",
     "sz": "100.0",
     "side": "A",
+    "dir": "Close Long",
     "time": 1741046400000,
     "fee": "-0.34",
     "liquidation": false,
     "oid": 2,
     "crossed": false,
-    "startPosition": "100.0"
+    "startPosition": "100.0",
+    "tid": 2
   }
 ]

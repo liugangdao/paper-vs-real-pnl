@@ -4,7 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from paper_vs_real.fetch import (
-    HyperliquidClient, fetch_fills_paginated, fetch_funding, fetch_candles,
+    HyperliquidClient, fetch_fills_sequential, fetch_funding, fetch_candles,
 )
 from paper_vs_real.compute import (
     compute_fees, compute_funding_cost, compute_slippage,
@@ -35,7 +35,7 @@ def run(
         start=_parse_iso(start_iso), end=_parse_iso(end_iso),
     )
 
-    entry, exit_ = fetch_fills_paginated(
+    entry, exit_ = fetch_fills_sequential(
         client,
         wallet=wallet,
         start=window.start,

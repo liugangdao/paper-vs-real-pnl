@@ -140,9 +140,9 @@ def test_filters_by_asset():
 def test_split_entry_exit_flag():
     client = MagicMock(spec=HyperliquidClient)
     client.post.return_value = [
-        _raw_fill(tid=1, start_pos="0"),   # entry
-        _raw_fill(tid=2, start_pos="10"),  # exit
-        _raw_fill(tid=3, start_pos="0"),   # entry
+        dict(_raw_fill(tid=1), dir="Open Long"),   # entry
+        dict(_raw_fill(tid=2), dir="Close Long"),  # exit
+        dict(_raw_fill(tid=3), dir="Open Long"),   # entry
     ]
     with patch("paper_vs_real.fetch.time.sleep"):
         entry, exit_ = fetch_fills_paginated(
@@ -175,3 +175,73 @@ def test_bottoms_out_at_min_window_without_infinite_loop():
     assert len(fills) == FILL_BATCH_CAP
     # Exactly 1 API call since window is already at/below min_window_ms
     assert client.post.call_count == 1
+
+
+def test_fetch_fills_sequential_stops_when_under_cap():
+    from paper_vs_real.fetch import fetch_fills_sequential
+
+    client = MagicMock(spec=HyperliquidClient)
+    client.post.return_value = [
+        _raw_fill(tid=i, time_ms=1700000000000 + i) for i in range(500)
+    ]
+
+    with patch("paper_vs_real.fetch.time.sleep"):
+        fills = fetch_fills_sequential(
+            client,
+            wallet="0xabc",
+            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            end=datetime(2024, 1, 2, tzinfo=timezone.utc),
+        )
+    assert len(fills) == 500
+    assert client.post.call_count == 1
+
+
+def test_fetch_fills_sequential_advances_cursor_on_cap_hit():
+    from paper_vs_real.fetch import fetch_fills_sequential, FILL_BATCH_CAP
+
+    client = MagicMock(spec=HyperliquidClient)
+    cursors_seen = []
+
+    def fake_post(body):
+        cursors_seen.append(body["startTime"])
+        if len(cursors_seen) == 1:
+            # First call returns FILL_BATCH_CAP consecutive fills
+            return [_raw_fill(tid=i, time_ms=1700000000000 + i) for i in range(FILL_BATCH_CAP)]
+        # Second call returns a few more
+        return [_raw_fill(tid=10_000 + i, time_ms=1700000001000 + i) for i in range(50)]
+
+    client.post.side_effect = fake_post
+
+    with patch("paper_vs_real.fetch.time.sleep"):
+        fills = fetch_fills_sequential(
+            client,
+            wallet="0xabc",
+            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            end=datetime(2024, 1, 2, tzinfo=timezone.utc),
+        )
+    # 2000 from first call + 50 from second (no overlap, different tids)
+    assert len(fills) == FILL_BATCH_CAP + 50
+    # Second call's startTime = 1700000000000 + (FILL_BATCH_CAP - 1) + 1
+    assert cursors_seen[1] == 1700000000000 + FILL_BATCH_CAP
+
+
+def test_fetch_fills_sequential_splits_entry_exit_via_dir():
+    from paper_vs_real.fetch import fetch_fills_sequential
+
+    client = MagicMock(spec=HyperliquidClient)
+    client.post.return_value = [
+        dict(_raw_fill(tid=1), dir="Open Long"),
+        dict(_raw_fill(tid=2), dir="Close Long"),
+        dict(_raw_fill(tid=3), dir="Open Long"),
+    ]
+
+    with patch("paper_vs_real.fetch.time.sleep"):
+        entry, exit_ = fetch_fills_sequential(
+            client,
+            wallet="0xabc",
+            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            end=datetime(2024, 1, 2, tzinfo=timezone.utc),
+            split_entry_exit=True,
+        )
+    assert len(entry) == 2
+    assert len(exit_) == 1

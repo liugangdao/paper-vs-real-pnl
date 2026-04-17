@@ -67,6 +67,26 @@ def test_fetch_funding_returns_signed_events():
 
 
 @respx.mock
+def test_fetch_fills_uses_dir_for_entry_exit_split():
+    body = json.loads((FIXTURES / "sample_fills_response.json").read_text())
+    respx.post("https://api.hyperliquid.xyz/info").mock(return_value=Response(200, json=body))
+
+    window = TradeWindow(
+        wallet="0xabc",
+        asset="BTC",
+        start=datetime(2025, 3, 1, tzinfo=timezone.utc),
+        end=datetime(2025, 3, 5, tzinfo=timezone.utc),
+    )
+    entry, exit_ = fetch_fills(
+        HyperliquidClient(), wallet="0xabc", window=window, split_entry_exit=True
+    )
+    assert len(entry) == 1
+    assert entry[0].side == "buy"
+    assert len(exit_) == 1
+    assert exit_[0].side == "sell"
+
+
+@respx.mock
 def test_fetch_candles_returns_ohlcv():
     body = json.loads((FIXTURES / "sample_candles_response.json").read_text())
     respx.post("https://api.hyperliquid.xyz/info").mock(return_value=Response(200, json=body))

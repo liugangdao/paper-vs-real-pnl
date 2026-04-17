@@ -1,4 +1,4 @@
 [
-  {"time": 1740790800000, "usdc": "-50.0", "coin": "BTC", "szi": "100.0", "fundingRate": "0.00001"},
-  {"time": 1740794400000, "usdc": "-62.5", "coin": "BTC", "szi": "100.0", "fundingRate": "0.0000125"}
+  {"time": 1740790800000, "hash": "0xabc", "delta": {"type": "funding", "coin": "BTC", "usdc": "-50.0", "szi": "100.0", "fundingRate": "0.00001", "nSamples": null}},
+  {"time": 1740794400000, "hash": "0xdef", "delta": {"type": "funding", "coin": "BTC", "usdc": "-62.5", "szi": "100.0", "fundingRate": "0.0000125", "nSamples": null}}
 ]
