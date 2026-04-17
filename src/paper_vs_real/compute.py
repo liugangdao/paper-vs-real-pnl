@@ -81,7 +81,7 @@ def compute_slippage(
     Future work: supplement with orderbook L2 snapshots or 1-second trade
     prints to get meaningful sub-minute mid-price approximation.
     """
-    if not fills:
+    if not fills or not candles:
         return SlippageResult(mid=Decimal("0"), low=Decimal("0"), high=Decimal("0"))
 
     total = Decimal("0")
