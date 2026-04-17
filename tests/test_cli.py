@@ -18,7 +18,7 @@ def test_run_produces_json_and_md(mock_client_cls, tmp_path):
 
     def fake_post(body):
         t = body["type"]
-        if t == "userFills":
+        if t == "userFillsByTime":
             return fills
         if t == "userFunding":
             return funding
@@ -30,14 +30,15 @@ def test_run_produces_json_and_md(mock_client_cls, tmp_path):
     client_instance.post.side_effect = fake_post
 
     out_dir = tmp_path / "out"
-    run(
-        wallet="0xabc",
-        asset="BTC",
-        start_iso="2025-03-01T00:00:00Z",
-        end_iso="2025-03-05T00:00:00Z",
-        paper_pnl="300000",
-        out_dir=out_dir,
-    )
+    with patch("paper_vs_real.fetch.time.sleep"):
+        run(
+            wallet="0xabc",
+            asset="BTC",
+            start_iso="2025-03-01T00:00:00Z",
+            end_iso="2025-03-05T00:00:00Z",
+            paper_pnl="300000",
+            out_dir=out_dir,
+        )
 
     assert (out_dir / "report.json").exists()
     assert (out_dir / "report.md").exists()
